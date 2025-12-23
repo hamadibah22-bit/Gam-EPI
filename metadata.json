@@ -1,0 +1,8 @@
+{
+  "name": "Copy of GAM EPI APP",
+  "description": "A comprehensive Progressive Web App for The Gambia's Expanded Programme on Immunization (EPI), helping health workers manage child vaccinations, track coverage, and generate reports.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ]
+}

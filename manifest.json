@@ -1,0 +1,23 @@
+
+{
+  "name": "Gambia EPI Registry",
+  "short_name": "GAM EPI",
+  "description": "National Immunization Registry for The Gambia",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Coat_of_arms_of_the_Gambia.svg/192px-Coat_of_arms_of_the_Gambia.svg.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Coat_of_arms_of_the_Gambia.svg/512px-Coat_of_arms_of_the_Gambia.svg.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
