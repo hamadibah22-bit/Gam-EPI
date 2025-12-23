@@ -58,15 +58,13 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
 
     // Initial check for pending requests
     const updateRequestsCount = () => {
-      if (currentUser?.userRole === UserRole.ADMIN) {
-        const users = storageService.getUsers();
-        const count = users.filter(u => 
-          u.approvalStatus === ApprovalStatus.PENDING || 
-          u.accountDeletionRequested || 
-          (u as any).approvalStatus === 'pending_change'
-        ).length;
-        setPendingRequestsCount(count);
-      }
+      const users = storageService.getUsers();
+      const count = users.filter(u => 
+        u.approvalStatus === ApprovalStatus.PENDING || 
+        u.accountDeletionRequested || 
+        (u as any).approvalStatus === 'pending_change'
+      ).length;
+      setPendingRequestsCount(count);
     };
     
     updateRequestsCount();
@@ -81,7 +79,6 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     };
   }, [currentUser]);
 
-  // Use the NavItem interface to fix the type error when pushing items with badgeCount
   const navItems: NavItem[] = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/register', icon: UserPlus, label: 'Register Child' },
@@ -161,16 +158,28 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
             </div>
           </div>
 
-          <div 
-            onClick={() => navigate('/profile')}
-            className="flex items-center space-x-5 cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-bold text-slate-800">{currentUser?.fullName}</span>
-              <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{currentUser?.healthCenter}</span>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shadow-inner">
-              <img src={currentUser?.profilePhoto || `https://ui-avatars.com/api/?name=${currentUser?.fullName}&background=random`} alt="Avatar" className="w-full h-full object-cover" />
+          <div className="flex items-center space-x-4 lg:space-x-6">
+            <button 
+              onClick={() => currentUser?.userRole === UserRole.ADMIN ? navigate('/users') : navigate('/')}
+              className="p-3 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all relative group"
+            >
+              <Bell size={20} />
+              {pendingRequestsCount > 0 && (
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full group-hover:animate-ping"></span>
+              )}
+            </button>
+
+            <div 
+              onClick={() => navigate('/profile')}
+              className="flex items-center space-x-4 cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <div className="hidden md:flex flex-col items-end">
+                <span className="text-sm font-bold text-slate-800">{currentUser?.fullName}</span>
+                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{currentUser?.healthCenter}</span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shadow-inner">
+                <img src={currentUser?.profilePhoto || `https://ui-avatars.com/api/?name=${currentUser?.fullName}&background=random`} alt="Avatar" className="w-full h-full object-cover" />
+              </div>
             </div>
           </div>
         </header>

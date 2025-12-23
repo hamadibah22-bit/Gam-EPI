@@ -97,6 +97,19 @@ export const storageService = {
     }
   },
 
+  deleteChild: (childId: string) => {
+    const children = storageService.getChildren();
+    const filteredChildren = children.filter(c => c.id !== childId);
+    localStorage.setItem(STORAGE_KEYS.CHILDREN, JSON.stringify(filteredChildren));
+
+    const records = storageService.getRecords();
+    const filteredRecords = records.filter(r => r.childId !== childId);
+    localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(filteredRecords));
+    
+    // Dispatch event so other components know data changed
+    window.dispatchEvent(new Event('storage'));
+  },
+
   // Record Management
   getRecords: (): VaccinationRecord[] => JSON.parse(localStorage.getItem(STORAGE_KEYS.RECORDS) || '[]'),
 

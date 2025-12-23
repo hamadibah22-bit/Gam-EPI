@@ -5,12 +5,12 @@ import {
   User, Syringe, Calendar, Printer, ArrowLeft, 
   CheckCircle2, Clock, Plus, X, ClipboardList, 
   Edit3, Save, AlertTriangle, Phone, MapPin, Search,
-  RefreshCw, Info, FileText
+  RefreshCw, Info, FileText, Trash2
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { HEALTH_FACILITIES, VACCINE_SCHEDULE } from '../constants';
 import { Child, VaccinationRecord, VaccineGroup, Gender } from '../types';
-import { format, differenceInWeeks, parseISO, isAfter, isValid } from 'date-fns';
+import { format, differenceInWeeks, isAfter, isValid } from 'date-fns';
 import { getVaccinationProgress, smartCapitalize, validateVaccinationDate, formatMCNumber, stripNumbers, stripNonNumeric, countWords, isValidPhone } from '../utils/helpers';
 
 const CORRECTION_REASONS = [
@@ -35,6 +35,11 @@ const ChildProfile: React.FC = () => {
   
   const [showModal, setShowModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<VaccineGroup | null>(null);
+
+  // Deletion state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const currentUser = storageService.getCurrentUser();
   const facilityVaccinators = storageService.getVaccinatorsForFacility(currentUser?.healthCenter || '');
@@ -51,13 +56,13 @@ const ChildProfile: React.FC = () => {
 
   // Scroll lock effect
   useEffect(() => {
-    if (showModal) {
+    if (showModal || showDeleteModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
     return () => { document.body.style.overflow = 'unset'; };
-  }, [showModal]);
+  }, [showModal, showDeleteModal]);
 
   useEffect(() => {
     if (id) {
@@ -66,8 +71,7 @@ const ChildProfile: React.FC = () => {
         setChild(found);
         setBioForm(found);
         
-        // Split DOB for editing
-        const dateObj = parseISO(found.dob);
+        const dateObj = new Date(found.dob);
         setBioDobParts({
           day: format(dateObj, 'dd'),
           month: format(dateObj, 'MM'),
@@ -82,19 +86,18 @@ const ChildProfile: React.FC = () => {
   if (!child || !bioForm) return null;
 
   const progress = getVaccinationProgress(child, records);
-  const ageWeeks = differenceInWeeks(new Date(), parseISO(child.dob));
+  const ageWeeks = differenceInWeeks(new Date(), new Date(child.dob));
 
   const handleSaveBio = () => {
     setBioError(null);
 
-    // Validate DOB parts
     const { day, month, year } = bioDobParts;
     if (!day || !month || !year || year.length !== 2) {
       setBioError("Please enter a valid 2-digit year (e.g., 24 for 2024)");
       return;
     }
     const dobStr = `20${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    const dobDate = parseISO(dobStr);
+    const dobDate = new Date(dobStr);
 
     if (!isValid(dobDate)) {
       setBioError("Invalid Date of Birth. Please check inputs.");
@@ -130,6 +133,19 @@ const ChildProfile: React.FC = () => {
     storageService.updateChild(updated);
     setChild(updated);
     setIsEditingBio(false);
+  };
+
+  const handleDeleteChild = async () => {
+    if (!deletionReason.trim()) return;
+    setIsDeleting(true);
+    
+    // Simulate slight delay for effect
+    await new Promise(r => setTimeout(r, 800));
+    
+    storageService.deleteChild(child.id);
+    setIsDeleting(false);
+    setShowDeleteModal(false);
+    navigate('/schedule');
   };
 
   const handleOpenVax = (group: VaccineGroup) => {
@@ -227,108 +243,125 @@ const ChildProfile: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl overflow-hidden">
-          <div className="h-32 bg-gradient-to-br from-blue-600 to-indigo-700 p-8 flex justify-between items-start">
-            <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center text-blue-100"><User size={40} className="text-slate-200" /></div>
-            <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
-              ID: {child.mcNumber}
-            </div>
-          </div>
-          <div className="p-8 space-y-6">
-            {!isEditingBio ? (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black text-slate-900 leading-tight">{child.fullName}</h2>
-                  <p className="text-sm font-bold text-blue-600 mt-1 uppercase tracking-wider">{child.gender}</p>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><Calendar size={18} /></div>
-                    <div><p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Birth Date</p><p className="font-bold">{format(parseISO(child.dob), 'dd MMM yyyy')}</p></div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><User size={18} /></div>
-                    <div><p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Caregiver</p><p className="font-bold">{child.motherName}</p></div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><Phone size={18} /></div>
-                    <div><p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Contact</p><p className="font-bold">{child.parentContact || '---'}</p></div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><MapPin size={18} /></div>
-                    <div><p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Address</p><p className="font-bold text-sm leading-snug">{child.address || 'No address recorded'}</p></div>
-                  </div>
-                </div>
+        <div className="flex flex-col space-y-6">
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl overflow-hidden">
+            <div className="h-32 bg-gradient-to-br from-blue-600 to-indigo-700 p-8 flex justify-between items-start">
+              <div className="w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center text-blue-100"><User size={40} className="text-slate-200" /></div>
+              <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
+                ID: {child.mcNumber}
               </div>
-            ) : (
-              <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-                {bioError && (
-                  <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-[10px] font-black uppercase flex items-center">
-                    <AlertTriangle size={14} className="mr-2" /> {bioError}
+            </div>
+            <div className="p-8 space-y-6">
+              {!isEditingBio ? (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 leading-tight">{child.fullName}</h2>
+                    <p className="text-sm font-bold text-blue-600 mt-1 uppercase tracking-wider">{child.gender}</p>
                   </div>
-                )}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase">Child Full Name* (2+ names)</label>
-                  <input 
-                    type="text" 
-                    value={bioForm.fullName} 
-                    onChange={e => setBioForm({...bioForm, fullName: smartCapitalize(stripNumbers(e.target.value))})} 
-                    className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold" 
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase">Mother Name* (2+ names)</label>
-                  <input 
-                    type="text" 
-                    value={bioForm.motherName} 
-                    onChange={e => setBioForm({...bioForm, motherName: smartCapitalize(stripNumbers(e.target.value))})} 
-                    className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold" 
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase">Birth Date (DD/MM/20YY)*</label>
-                  <div className="flex items-center space-x-2 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-                    <input type="text" maxLength={2} placeholder="DD" value={bioDobParts.day} onChange={e => setBioDobParts({...bioDobParts, day: stripNonNumeric(e.target.value)})} className="w-8 bg-transparent text-center font-bold outline-none" />
-                    <span className="text-slate-300 font-bold">/</span>
-                    <input type="text" maxLength={2} placeholder="MM" value={bioDobParts.month} onChange={e => setBioDobParts({...bioDobParts, month: stripNonNumeric(e.target.value)})} className="w-8 bg-transparent text-center font-bold outline-none" />
-                    <span className="text-slate-300 font-bold">/</span>
-                    <div className="flex items-center">
-                      <span className="text-slate-400 font-bold text-sm">20</span>
-                      <input type="text" maxLength={2} placeholder="YY" value={bioDobParts.year} onChange={e => setBioDobParts({...bioDobParts, year: stripNonNumeric(e.target.value)})} className="w-6 bg-transparent text-center font-bold outline-none" />
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><Calendar size={18} /></div>
+                      <div><p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Birth Date</p><p className="font-bold">{format(new Date(child.dob), 'dd MMM yyyy')}</p></div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><User size={18} /></div>
+                      <div><p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Caregiver</p><p className="font-bold">{child.motherName}</p></div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><Phone size={18} /></div>
+                      <div><p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Contact</p><p className="font-bold">{child.parentContact || '---'}</p></div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400"><MapPin size={18} /></div>
+                      <div><p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Address</p><p className="font-bold text-sm leading-snug">{child.address || 'No address recorded'}</p></div>
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+              ) : (
+                <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                  {bioError && (
+                    <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-[10px] font-black uppercase flex items-center">
+                      <AlertTriangle size={14} className="mr-2" /> {bioError}
+                    </div>
+                  )}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">ID/MC#*</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase">Child Full Name* (2+ names)</label>
                     <input 
                       type="text" 
-                      value={bioForm.mcNumber} 
-                      onChange={e => setBioForm({...bioForm, mcNumber: formatMCNumber(stripNonNumeric(e.target.value))})} 
+                      value={bioForm.fullName} 
+                      onChange={e => setBioForm({...bioForm, fullName: smartCapitalize(stripNumbers(e.target.value))})} 
                       className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold" 
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase">Phone* (7 Digits)</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase">Mother Name* (2+ names)</label>
                     <input 
                       type="text" 
-                      maxLength={7}
-                      value={bioForm.parentContact} 
-                      onChange={e => setBioForm({...bioForm, parentContact: stripNonNumeric(e.target.value).slice(0, 7)})} 
+                      value={bioForm.motherName} 
+                      onChange={e => setBioForm({...bioForm, motherName: smartCapitalize(stripNumbers(e.target.value))})} 
+                      className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase">Birth Date (DD/MM/20YY)*</label>
+                    <div className="flex items-center space-x-2 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+                      <input type="text" maxLength={2} placeholder="DD" value={bioDobParts.day} onChange={e => setBioDobParts({...bioDobParts, day: stripNonNumeric(e.target.value)})} className="w-8 bg-transparent text-center font-bold outline-none" />
+                      <span className="text-slate-300 font-bold">/</span>
+                      <input type="text" maxLength={2} placeholder="MM" value={bioDobParts.month} onChange={e => setBioDobParts({...bioDobParts, month: stripNonNumeric(e.target.value)})} className="w-8 bg-transparent text-center font-bold outline-none" />
+                      <span className="text-slate-300 font-bold">/</span>
+                      <div className="flex items-center">
+                        <span className="text-slate-400 font-bold text-sm">20</span>
+                        <input type="text" maxLength={2} placeholder="YY" value={bioDobParts.year} onChange={e => setBioDobParts({...bioDobParts, year: stripNonNumeric(e.target.value)})} className="w-6 bg-transparent text-center font-bold outline-none" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">ID/MC#*</label>
+                      <input 
+                        type="text" 
+                        value={bioForm.mcNumber} 
+                        onChange={e => setBioForm({...bioForm, mcNumber: formatMCNumber(stripNonNumeric(e.target.value))})} 
+                        className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold" 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">Phone* (7 Digits)</label>
+                      <input 
+                        type="text" 
+                        maxLength={7}
+                        value={bioForm.parentContact} 
+                        onChange={e => setBioForm({...bioForm, parentContact: stripNonNumeric(e.target.value).slice(0, 7)})} 
+                        className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold" 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase">Address (Optional)</label>
+                    <textarea 
+                      value={bioForm.address} 
+                      onChange={e => setBioForm({...bioForm, address: smartCapitalize(stripNumbers(e.target.value))})} 
                       className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold" 
                     />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase">Address (Optional)</label>
-                  <textarea 
-                    value={bioForm.address} 
-                    onChange={e => setBioForm({...bioForm, address: smartCapitalize(stripNumbers(e.target.value))})} 
-                    className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-bold" 
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
+          </div>
+
+          {/* Danger Zone for Child Deletion */}
+          <div className="bg-white rounded-[2rem] border border-rose-100 shadow-xl shadow-rose-900/5 p-8 flex flex-col space-y-4">
+            <div className="flex items-center space-x-3 text-rose-600">
+               <Trash2 size={20} />
+               <h3 className="font-black text-sm uppercase tracking-widest">Danger Zone</h3>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">Permanently remove this child's record and all associated history from the registry.</p>
+            <button 
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full py-3.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl font-black uppercase text-[10px] hover:bg-rose-600 hover:text-white transition-all active:scale-95"
+            >
+              Delete Child Record
+            </button>
           </div>
         </div>
 
@@ -407,6 +440,65 @@ const ChildProfile: React.FC = () => {
         </div>
       </div>
 
+      {/* Child Deletion Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white rounded-[3rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-rose-50/30">
+              <div className="flex items-center space-x-3">
+                <AlertTriangle className="text-rose-600" size={24} />
+                <h2 className="text-xl font-black text-slate-900">Delete Record?</h2>
+              </div>
+              <button onClick={() => setShowDeleteModal(false)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-10 space-y-6">
+              <div className="space-y-2">
+                <p className="text-slate-900 font-black text-base">You are about to permanently delete:</p>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="font-bold text-slate-700">{child.fullName}</p>
+                  <p className="text-[10px] font-black text-blue-600 uppercase">MC# {child.mcNumber}</p>
+                </div>
+                <p className="text-slate-500 font-medium text-xs leading-relaxed">
+                  Warning: This action will also delete <span className="text-rose-600 font-bold">{records.length} vaccination records</span> associated with this child. This cannot be undone.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason for Deletion*</label>
+                <textarea 
+                  rows={3}
+                  value={deletionReason}
+                  onChange={e => setDeletionReason(e.target.value)}
+                  placeholder="e.g., Duplicate record, data entry error, family relocated..."
+                  className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-rose-500/10 font-bold text-sm"
+                />
+              </div>
+
+              <div className="pt-4 flex flex-col space-y-3">
+                <button 
+                  onClick={handleDeleteChild}
+                  disabled={!deletionReason.trim() || isDeleting}
+                  className="w-full py-5 bg-rose-600 text-white rounded-2xl font-black uppercase text-xs shadow-2xl shadow-rose-500/30 hover:bg-rose-700 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  {isDeleting ? <RefreshCw className="animate-spin" /> : <Trash2 size={18} />}
+                  <span>{isDeleting ? 'Deleting...' : 'Delete Permanently'}</span>
+                </button>
+                <button 
+                  onClick={() => setShowDeleteModal(false)}
+                  className="w-full py-5 text-slate-400 font-black uppercase text-[10px] hover:text-slate-600 transition-colors"
+                >
+                  Cancel and Keep Record
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Vaccination Record Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
           <div className="bg-white rounded-[3rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-8">

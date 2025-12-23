@@ -10,7 +10,8 @@ import {
   Plus,
   Activity,
   Smartphone,
-  X
+  X,
+  Bell
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { storageService } from '../services/storageService';
@@ -72,6 +73,13 @@ const Dashboard: React.FC = () => {
       : 0
   };
 
+  const scrollToPulse = () => {
+    const pulseEl = document.getElementById('system-pulse');
+    if (pulseEl) {
+      pulseEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Install Banner */}
@@ -110,13 +118,23 @@ const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">EPI Command Center</h1>
           <p className="text-slate-500 font-medium">Monitoring coverage for <span className="text-blue-600 font-bold">{currentUser?.healthCenter}</span></p>
         </div>
-        <Link 
-          to="/register"
-          className="bg-blue-600 text-white px-8 py-4 rounded-[1.5rem] font-black shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all transform active:scale-95 flex items-center justify-center space-x-3"
-        >
-          <Plus size={20} />
-          <span>Register Child</span>
-        </Link>
+        <div className="flex items-center space-x-3">
+          <button 
+            onClick={scrollToPulse}
+            className="p-4 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-100 shadow-sm transition-all relative group"
+            title="View Notifications"
+          >
+            <Bell size={24} />
+            <span className="absolute top-3.5 right-3.5 w-3 h-3 bg-rose-500 border-2 border-white rounded-full group-hover:animate-ping"></span>
+          </button>
+          <Link 
+            to="/register"
+            className="bg-blue-600 text-white px-8 py-4 rounded-[1.5rem] font-black shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all transform active:scale-95 flex items-center justify-center space-x-3"
+          >
+            <Plus size={20} />
+            <span>Register Child</span>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -143,7 +161,7 @@ const Dashboard: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Find child by MC# or name..."
-                className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 transition-all"
+                className="w-full pl-12 pr-6 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 transition-all"
               />
             </div>
 
@@ -183,7 +201,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-slate-900 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden text-white">
+        <div id="system-pulse" className="bg-slate-900 rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden text-white scroll-mt-24">
           <div className="p-8 border-b border-white/5 flex items-center space-x-3">
             <Activity className="text-blue-400" size={20} />
             <h2 className="font-black uppercase tracking-widest text-sm">System Pulse</h2>

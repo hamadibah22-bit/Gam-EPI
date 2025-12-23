@@ -1,5 +1,5 @@
 
-import { format, differenceInWeeks, addWeeks, parseISO, isAfter, isBefore, startOfDay } from 'date-fns';
+import { format, differenceInWeeks, addWeeks, isAfter, isBefore, startOfDay } from 'date-fns';
 import { VACCINE_SCHEDULE } from '../constants';
 import { VaccinationRecord, Child } from '../types';
 
@@ -34,9 +34,10 @@ export const smartCapitalize = (text: string) => {
     .join(' ');
 };
 
+// Fixed: Using new Date instead of parseISO to resolve build errors
 export const validateVaccinationDate = (adminDate: string, birthDate: string, minWeeks: number) => {
-  const aDate = startOfDay(parseISO(adminDate));
-  const bDate = startOfDay(parseISO(birthDate));
+  const aDate = startOfDay(new Date(adminDate));
+  const bDate = startOfDay(new Date(birthDate));
   const minDate = addWeeks(bDate, minWeeks);
 
   if (isBefore(aDate, bDate)) return "Cannot record vaccine before birth date.";
@@ -53,9 +54,10 @@ export const getVaccinationProgress = (child: Child, records: VaccinationRecord[
   return Math.round((completedVaccines / totalVaccines) * 100);
 };
 
+// Fixed: Using new Date instead of parseISO to resolve build errors
 export const getDefaulterStatus = (child: Child, records: VaccinationRecord[]) => {
   if (!child || !child.dob) return [];
-  const birthDate = parseISO(child.dob);
+  const birthDate = new Date(child.dob);
   const completedIds = new Set(records.filter(r => r.status === 'completed').map(r => r.vaccineId));
   
   const missedVaccines: any[] = [];

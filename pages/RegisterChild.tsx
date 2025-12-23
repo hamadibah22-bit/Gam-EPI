@@ -8,7 +8,7 @@ import {
 import { storageService } from '../services/storageService';
 import { Gender, ChildStatus, Child } from '../types';
 import { formatMCNumber, smartCapitalize, stripNumbers, stripNonNumeric, countWords, isValidPhone } from '../utils/helpers';
-import { isAfter, parseISO, isValid } from 'date-fns';
+import { isAfter, isValid } from 'date-fns';
 
 const RegisterChild: React.FC = () => {
   const navigate = useNavigate();
@@ -53,7 +53,8 @@ const RegisterChild: React.FC = () => {
     }
 
     const constructedDobStr = `20${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    const dobDate = parseISO(constructedDobStr);
+    // Fixed: Using new Date instead of parseISO
+    const dobDate = new Date(constructedDobStr);
 
     if (!isValid(dobDate)) {
       setError("Invalid Date of Birth provided. Please check the day and month.");

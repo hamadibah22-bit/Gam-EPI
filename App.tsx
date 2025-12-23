@@ -84,12 +84,13 @@ const LoginView = () => {
     setLoading(true);
     await new Promise(r => setTimeout(r, 1000));
     const users = storageService.getUsers();
+    // Simulate successful Google Auth
     const user = users.find(u => u.email === 'admin@health.gm');
     if (user) {
       storageService.setCurrentUser(user);
       navigate('/');
     } else {
-      alert("This Google account is not linked to an active profile. Please Sign Up.");
+      alert("This Google account is not linked to an active worker profile. Please Sign Up.");
     }
     setLoading(false);
   };
@@ -161,7 +162,7 @@ const SignupView = () => {
       updatedAt: new Date().toISOString()
     };
 
-    // Correctly persist to storage so admin sees it
+    // CRITICAL: Correctly persist to storage so admin sees it in Action Inbox
     storageService.addUser(newSignup);
     
     setLoading(false);
@@ -178,7 +179,7 @@ const SignupView = () => {
       email: "worker.test@health.gm"
     });
     setLoading(false);
-    alert("Google credentials linked. Select your facility to complete Sign Up.");
+    alert("Google credentials linked. Please select your facility and click 'Complete Sign Up'.");
   };
 
   return (
