@@ -155,7 +155,7 @@ const UserManagement: React.FC = () => {
                           <p className="text-sm font-bold text-slate-700 italic leading-relaxed">
                             {isDeletion ? user.deletionReason : 
                              isFacilityChange ? `Requesting transfer to ${(user as any).pendingFacility}` : 
-                             "Standard registration for health facility access."}
+                             `New worker requesting access to ${user.healthCenter}.`}
                           </p>
                        </div>
                     </div>
@@ -248,7 +248,7 @@ const UserManagement: React.FC = () => {
                     </td>
                     <td className="px-10 py-6 text-right">
                        <button className="text-slate-300 hover:text-blue-600 p-2 transition-colors">
-                          <Edit size={18} />
+                          <EditIcon size={18} />
                        </button>
                     </td>
                   </tr>
@@ -268,7 +268,7 @@ const UserManagement: React.FC = () => {
   );
 };
 
-const Edit = ({ size }: { size: number }) => (
+const EditIcon = ({ size }: { size: number }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 );
 

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Printer, ArrowLeft, Download, ChevronDown, FileText, Image as ImageIcon, FileCode, FileImage, Loader2 } from 'lucide-react';
+import { Printer, ArrowLeft, Download, ChevronDown, FileText, FileCode, FileImage, Loader2 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { Child, VaccinationRecord } from '../types';
 import { format, parseISO } from 'date-fns';
@@ -47,7 +47,6 @@ const Certificate: React.FC = () => {
     if (!el) return;
     
     const content = el.innerHTML;
-    // Word handles HTML-based files with the docx extension if the MIME type is correct
     const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
           "xmlns:w='urn:schemas-microsoft-com:office:word' " +
           "xmlns='http://www.w3.org/TR/REC-html40'>" +
@@ -81,13 +80,12 @@ const Certificate: React.FC = () => {
     setShowSaveDropdown(false);
 
     try {
-      // Use html2canvas to capture the certificate
       const canvas = await html2canvas(el, {
         scale: 2, 
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-        windowWidth: 794, // Approx 210mm in pixels at 96dpi
+        windowWidth: 794, 
         onclone: (clonedDoc: any) => {
           const clonedEl = clonedDoc.getElementById('certificate-to-export');
           clonedEl.style.boxShadow = 'none';
@@ -182,29 +180,19 @@ const Certificate: React.FC = () => {
         </button>
       </div>
 
-      {isExporting && (
-        <div className="fixed inset-0 z-[1000] bg-slate-900/40 backdrop-blur-sm flex flex-col items-center justify-center space-y-4">
-          <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center space-y-4">
-            <Loader2 size={40} className="text-blue-600 animate-spin" />
-            <p className="font-black text-slate-900 uppercase tracking-widest text-sm">Processing Certificate...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Main Certificate Content - Strict A4 Dimensions */}
+      {/* Main Certificate Content */}
       <div 
         id="certificate-to-export"
         className="certificate-container w-[210mm] h-[297mm] bg-white border border-slate-300 shadow-2xl p-[15mm] text-slate-900 flex flex-col relative print:border-none print:shadow-none"
       >
-        {/* Top Header */}
         <div className="flex justify-between items-start mb-10">
           <div className="flex flex-col items-start">
-             <div className="w-24 h-14 relative border border-slate-300 mb-1 overflow-hidden">
-                <div className="h-1/3 w-full bg-[#CE1126]"></div>
-                <div className="h-[5%] w-full bg-white"></div>
-                <div className="h-[23%] w-full bg-[#0032A0]"></div>
-                <div className="h-[5%] w-full bg-white"></div>
-                <div className="h-1/3 w-full bg-[#3A7728]"></div>
+             <div className="w-24 h-16 shadow-sm mb-1 overflow-hidden rounded-sm border border-slate-100">
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Flag_of_The_Gambia.svg/1024px-Flag_of_The_Gambia.svg.png" 
+                  alt="Gambia Flag" 
+                  className="w-full h-full object-cover" 
+                />
              </div>
              <p className="text-[8px] font-bold uppercase tracking-tight text-slate-400">Rep. of The Gambia</p>
           </div>
@@ -225,7 +213,6 @@ const Certificate: React.FC = () => {
           </div>
         </div>
 
-        {/* Biodata Section */}
         <div className="space-y-4 mb-8">
           <div className="grid grid-cols-2 gap-x-8 gap-y-4">
             <div className="flex items-baseline space-x-2">
@@ -251,14 +238,12 @@ const Certificate: React.FC = () => {
           </div>
         </div>
 
-        {/* Antigen Section Title */}
         <div className="text-center mb-6">
            <h2 className="text-sm font-black uppercase border-b border-slate-900 inline-block px-4 pb-0.5">
              Immunisation Record
            </h2>
         </div>
 
-        {/* Vaccination Grid - Compressed for A4 */}
         <div className="flex-1 space-y-6">
           <div className="grid grid-cols-2 gap-x-8 gap-y-6 border-b border-slate-100 pb-6">
             <div className="space-y-2.5">
@@ -312,7 +297,6 @@ const Certificate: React.FC = () => {
           </div>
         </div>
 
-        {/* Declaration */}
         <div className="mt-auto pt-8">
           <div className="mb-10">
             <h3 className="font-black uppercase text-[10px] mb-2 tracking-widest">Official Certification</h3>
@@ -345,7 +329,6 @@ const Certificate: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-6 text-center text-[7px] font-black uppercase text-slate-300 tracking-[0.3em]">
           Electronic Vaccination Record • GAM EPI Registry • Official Document
         </div>
